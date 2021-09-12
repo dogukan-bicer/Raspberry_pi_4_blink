@@ -1,7 +1,6 @@
 //  How to access GPIO registers from C-code on the Raspberry-Pi 4
 //  Orginal version===>https://elinux.org/RPi_GPIO_Code_Samples#Direct_register_access
 #define GPIO_BASE  0xfe200000 // BCM2711 GPIO Base 
-#define PAGE_SIZE  4096
 #define BLOCK_SIZE 4096
 
 #include <fcntl.h>
