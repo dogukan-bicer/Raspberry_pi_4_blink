@@ -4,13 +4,13 @@
         .cpu    cortex-a72
         .fpu    neon-fp-armv8
         .syntax unified         @ modern syntax
-        .equ    PIN,21           @ 1 bit for pin
+        .equ    PIN,21          @ 1 bit for pin
         .equ    PINS_IN_REG,32
         .equ    GPSET0,0x1c     @ set register offset
         .equ    PIN_FIELD,0b111 @ 3 bits
         .equ    GPCLR0,0x28     @ clear register offset
         .equ    PROT_RDWR,0x3   @PROT_READ(0x1)|PROT_WRITE(0x2)
-        .equ    BLOCK_SIZE,4096  @ Raspbian memory page
+        .equ    BLOCK_SIZE,4096 @ Raspbian memory page
         .equ    OUTPUT,1        @ use pin for ouput
         .equ    ONE_SEC,1       @ sleep one second
         .equ    mem_fd_open,3 
@@ -26,9 +26,6 @@ device:
 @ The program
         .text
         .global main
-        .global gpioPinClr
-        .global gpioPinSet
-        
 main:
 @ Open /dev/gpiomem for read/write and syncing        
         ldr     r1, O_RDWR_O_SYNC    @ flags for accessing device
@@ -52,7 +49,6 @@ main:
         mov     r3, PIN_FIELD   @ gpio pin field
         mov     r3, PINS_IN_REG @ divisor
 @ All OK, blink the LED 
-
 loop:
         mov     r0, r5          @ GPIO programming memory
         mov     r1, PIN21
