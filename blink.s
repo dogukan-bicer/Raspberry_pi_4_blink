@@ -10,16 +10,15 @@
         .equ    PIN_FIELD,0b111 @ 3 bits
         .equ    GPCLR0,0x28     @ clear register offset
         .equ    PROT_RDWR,0x3   @PROT_READ(0x1)|PROT_WRITE(0x2)
-        .equ    PAGE_SIZE,4096  @ Raspbian memory page
+        .equ    BLOCK_SIZE,4096  @ Raspbian memory page
         .equ    OUTPUT,1        @ use pin for ouput
         .equ    ONE_SEC,1       @ sleep one second
+        .equ    mem_fd_open,3 
         .equ    PIN21,21        @ pin set bit
         .equ    FILE_DESCRP_ARG,0   @ file descriptor
-        .equ    DEVICE_ARG,4    @ device address
-@ The following are defined in /usr/include/asm-generic/fcntl.h:.
-        .equ    O_SYNC,256      @ 04000000|00010000
+        .equ    DEVICE_ARG,3    @ device address
 @ The following are defined in /usr/include/asm-generic/mman-common.h:
-        .equ    MAP_SHARED,0x01 @ share changes
+        .equ    MAP_SHARED,1 @ share changes
 @ Constant program data
         .section .rodata
 device:
@@ -32,25 +31,22 @@ device:
         
 main:
 @ Open /dev/gpiomem for read/write and syncing        
-        ldr     r0, deviceAddr  @ address of /dev/gpiomem
-        ldr     r1, openMode    @ flags for accessing device
+        ldr     r1, O_RDWR_O_SYNC    @ flags for accessing device
+        ldr     r0, mem_fd      @ address of /dev/gpiomem
         bl      open     
         mov     r4, r0          @ use r4 for file descriptor
 @ Map the GPIO registers to a main memory location so we can access them
         str     r4, [sp, FILE_DESCRP_ARG] @ /dev/gpiomem file descriptor
-        ldr     r0, gpio        @ address of GPIO
-        str     r0, [sp, DEVICE_ARG]      @ location of GPIO
-        mov     r1, PAGE_SIZE   @ get 1 page of memory
+        mov     r1, BLOCK_SIZE  @ get 1 page of memory
         mov     r2, PROT_RDWR   @ read/write this memory
         mov     r3, MAP_SHARED  @ share with other processes
+        mov     r0, mem_fd_open @ address of /dev/gpiomem
+        ldr     r0, GPIO_BASE   @ address of GPIO
+        str     r0, [sp, DEVICE_ARG]      @ location of GPIO
         bl      mmap              
         mov     r5, r0          @ use r5 for programming memory address
         mov     r1, PIN21       @ pin to blink
-        mov     r2, OUTPUT      @ it's an output
-        mov     r10, r0         @ save pointer to GPIO
-        mov     r11, r1         @ save pin number      
-        udiv    r0, r11, r3     @ GPFSEL number
-        sub     r1, r11, r1     @ for GPFSEL pin
+        mov     r2, OUTPUT      @ it's an output     
     @ Set up the GPIO pin funtion register in programming memory
         add     r0, r10, r0     @ GPFSELn address
         mov     r3, PIN_FIELD   @ gpio pin field
@@ -87,9 +83,9 @@ loop:
         b       loop           
 
 @ addresses of messages
-gpio:
+GPIO_BASE:
         .word   0xfe200000 @GPIO Base address Raspberry pi 4
-deviceAddr:
+mem_fd:
         .word   device
-openMode:
-        .word   258        @ 2|256 open file flags.2 open for read/write
+O_RDWR_O_SYNC:
+        .word   2|256       @ O_RDWR (2)|O_SYNC (256). 
